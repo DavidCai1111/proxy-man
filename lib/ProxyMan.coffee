@@ -2,55 +2,57 @@ http = require 'http'
 util = require 'util'
 events = require 'events'
 url = require 'url'
+extension = require './extension'
 
 ProxyMan = () ->
-  events.EventEmitter.call this
-  @proxyServer = null
   @targetUrl = ''
+  @proxyServer = http.createServer()
+  events.EventEmitter.call this
 
 util.inherits ProxyMan, events.EventEmitter
 
-ProxyMan.prototype.target = (@targetUrl) ->
+ProxyMan.prototype.createProxy = (@targetUrl, @outerReq, @outerRes) ->
 
 ProxyMan.prototype.listen = (port, callback) ->
+  console.log 'listen'
   ctx = this
-  @proxyServer = http.createServer (rawReq, rawRes) ->
-    ctx.emit 'proxyReq'
-    _url = url.parse ctx.targetUrl, true
+  @proxyServer.listen port, '127.0.0.1', callback
 
-    console.log '--------------------'
-    console.dir _url
-    console.log '--------------------'
+  @targetUrl = url.parse @targetUrl, true
+  @outerReq.setHeader = extension.req.setHeader
+  @outerReq.headers.host = ctx.targetUrl.host
 
-    rawReq.headers.host = _url.host
-    _opt =
-      hostname: _url.hostname
-      port: _url.port
-      method: rawReq.method
-      path: _url.path
-      headers: rawReq.headers
+  ctx.emit 'beforeReqSend', @outerReq
+  ctx.sendRequest @outerReq, @outerRes
 
-    console.log '--------------------'
-    console.dir _opt
-    console.log '--------------------'
+ProxyMan.prototype.sendRequest = (req, res) ->
+  console.log 'begin to sent!'
+  ctx = this
+  _opt =
+    hostname: @targetUrl.hostname
+    port: @targetUrl.port
+    method: @outerReq.method
+    path: @targetUrl.path
+    headers: @outerReq.headers
 
-    req = http.request _opt, (targetRes) ->
-      buf = ''
-      targetRes.on 'data', (d) ->
-        buf += d
-      .on 'end', () ->
+  console.dir _opt
 
-        console.log '--------------------'
-        console.log "status code #{targetRes.statusCode}"
-        console.dir targetRes.headers
-        console.log '--------------------'
+  _request = http.request _opt, (targetRes) ->
+    buf = ''
 
-        rawRes.end(buf)
-      .on 'error', (err) ->
-        console.error err
+    targetRes.on 'data', (d) ->
+      buf += d
+    targetRes.on 'end', () ->
+      console.log '--------------------'
+      console.log "status code #{targetRes.statusCode}"
+      console.dir targetRes.headers
+      console.log '--------------------'
+      ctx.outerRes.end buf
 
-    req.end()
-  .listen port, '127.0.0.1', callback
+  _request.on 'error', (err) ->
+    console.error err
+
+  _request.end()
 
 ProxyMan.prototype.close = (callback) ->
   @proxyServer.close(callback)
