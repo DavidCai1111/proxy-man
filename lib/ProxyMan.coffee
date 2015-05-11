@@ -7,31 +7,42 @@ extension = require './extension'
 redirectRegex = /^30(1|2|7|8)$/;
 
 ProxyMan = () ->
-  @proxyServer = http.createServer()
-  events.EventEmitter.call this
+  @_proxyServer = null
+  events.EventEmitter.call @
 
 util.inherits ProxyMan, events.EventEmitter
 
 ProxyMan.prototype.createProxy = (@targetUrl, @outerReq, @outerRes) ->
+  ctx = @
+  if @outerReq == undefined || @outerRes == undefined
+    if @_proxyServer == null then @_proxyServer = http.createServer()
+    @_proxyServer.on 'request', (req, res) ->
+      ctx.outerReq = req
+      ctx.outerRes = res
+      ctx.pretreatment.call(ctx)
+      ctx.sendRequest()
+    @
+  else
+    @pretreatment()
+    @sendRequest()
 
 ProxyMan.prototype.listen = (port, callback) ->
-  @proxyServer.listen port, callback
+  @_proxyServer.listen port, callback
 
+ProxyMan.prototype.pretreatment = () ->
   @targetUrl = url.parse @targetUrl, true
   @outerReq.setHeader = extension.req.setHeader
   @outerReq.headers.host = @targetUrl.host
 
-  @emit 'beforeReqSend', @outerReq
-  @sendRequest @outerReq, @outerRes
-
-ProxyMan.prototype.sendRequest = (req, res) ->
+ProxyMan.prototype.sendRequest = () ->
   ctx = @
+  @emit 'beforeReqSend', @outerReq
   _opt =
     hostname: @targetUrl.hostname
     port: @targetUrl.port
-    method: req.method
+    method: @outerReq.method
     path: @targetUrl.path
-    headers: req.headers
+    headers: @outerReq.headers
 
   _request = http.request _opt, (targetRes) ->
     buf = []
@@ -47,19 +58,20 @@ ProxyMan.prototype.sendRequest = (req, res) ->
           @targetUrl = targetRes.headers.location
           return ctx.sendRequest ctx.outerReq, ctx.outRes
 
-      res.statusCode = targetRes.statusCode
-      res.body = body
-      ctx.emit 'beforeResGet', res
+      ctx.outerRes.statusCode = targetRes.statusCode
+      ctx.outerRes.body = body
+      ctx.emit 'beforeResGet', ctx.outerRes
 
-      unless res.headersSent
+      unless ctx.outerRes.headersSent
         for key, value of targetRes.headers
-          unless res.getHeader(key) == undefined
-            res.setHeader key, value
+          unless ctx.outerRes.getHeader(key) == undefined
+            ctx.outerRes.setHeader key, value
 
-        res.setHeader 'content-length', res.body.length
-        res.writeHead res.statusCode
-        res.write res.body
-        res.end()
+        ctx.outerRes.setHeader 'content-length', ctx.outerRes.body.length
+        ctx.outerRes.writeHead ctx.outerRes.statusCode
+        ctx.outerRes.write ctx.outerRes.body
+        ctx.outerRes.end()
+        ctx.close()
 
   _request.on 'error', (err) ->
     ctx.emit 'error', err
@@ -67,6 +79,7 @@ ProxyMan.prototype.sendRequest = (req, res) ->
   _request.end()
 
 ProxyMan.prototype.close = (callback) ->
-  @proxyServer.close(callback)
+  unless @_proxyServer == null
+    @_proxyServer.close(callback)
 
 exports = module.exports = ProxyMan
