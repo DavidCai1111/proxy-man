@@ -44,8 +44,6 @@ ProxyMan.prototype.sendRequest = (req, res) ->
       #handle redirect
       if redirectRegex.test targetRes.statusCode
         unless ctx.targetUrl.href == targetRes.headers.location
-          console.log ctx.targetUrl.href
-          console.log targetRes.headers.location
           @targetUrl = targetRes.headers.location
           return ctx.sendRequest ctx.outerReq, ctx.outRes
 
