@@ -8,11 +8,6 @@ proxy-man是一个基于原生http模块实现的代理，它可以用来代理`
 ```SHELL
 npm install proxy-man --save
 ```
-源码：
-```SHELL
-git clone git@github.com:DavidCai1993/proxy-man.git
-cd proxy-man && npm i && gulp #编译coffee的输出目录为./build
-```
 
 ## 例子
 ```js
