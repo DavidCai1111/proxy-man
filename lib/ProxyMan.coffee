@@ -56,7 +56,6 @@ ProxyMan.prototype.sendRequest = () ->
         unless ctx.targetUrl.href == targetRes.headers.location
           @targetUrl = targetRes.headers.location
           return ctx.sendRequest ctx.outerReq, ctx.outRes
-
       ctx.outerRes.statusCode = targetRes.statusCode
       ctx.outerRes.body = body
       ctx.emit 'beforeResGet', ctx.outerRes

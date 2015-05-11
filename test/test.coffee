@@ -8,6 +8,7 @@ describe 'test proxy-man', () ->
 
   it 'proxy serve', (done) ->
     proxy = new ProxyMan()
+
     ProxyServer = http.createServer (req, res) ->
       proxy.createProxy('http://localhost:9091', req, res)
     ProxyServer.listen 8081
@@ -26,6 +27,7 @@ describe 'test proxy-man', () ->
 
   it 'proxy server', (done) ->
     proxy = new ProxyMan()
+
     proxy.createProxy('http://localhost:9092').listen 8082
 
     server = http.createServer (req, res) ->
