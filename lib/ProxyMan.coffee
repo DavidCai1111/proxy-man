@@ -14,9 +14,8 @@ util.inherits ProxyMan, events.EventEmitter
 ProxyMan.prototype.createProxy = (@targetUrl, @outerReq, @outerRes) ->
 
 ProxyMan.prototype.listen = (port, callback) ->
-  console.log 'listen'
   ctx = this
-  @proxyServer.listen port, '127.0.0.1', callback
+  @proxyServer.listen port, callback
 
   @targetUrl = url.parse @targetUrl, true
   @outerReq.setHeader = extension.req.setHeader
@@ -26,28 +25,40 @@ ProxyMan.prototype.listen = (port, callback) ->
   ctx.sendRequest @outerReq, @outerRes
 
 ProxyMan.prototype.sendRequest = (req, res) ->
-  console.log 'begin to sent!'
+  console.log '---------res---------'
+  console.dir res.headers
+  console.log '---------res---------'
   ctx = this
   _opt =
     hostname: @targetUrl.hostname
     port: @targetUrl.port
-    method: @outerReq.method
+    method: req.method
     path: @targetUrl.path
-    headers: @outerReq.headers
+    headers: req.headers
 
   console.dir _opt
 
   _request = http.request _opt, (targetRes) ->
-    buf = ''
+    buf = []
 
-    targetRes.on 'data', (d) ->
-      buf += d
+    targetRes.on 'data', (data) ->
+      buf.push data
     targetRes.on 'end', () ->
+      body = Buffer.concat(buf, buf.length).toString()
+      ctx.emit 'beforeResGet', targetRes
+      for key, value of targetRes.headers
+        console.log "set #{key} as #{value}"
+        res.setHeader key, value
+
+      res.writeHead targetRes.statusCode
+
       console.log '--------------------'
-      console.log "status code #{targetRes.statusCode}"
-      console.dir targetRes.headers
+      console.log "status code #{res.statusCode}"
+      console.log res.headers
+      console.log body
       console.log '--------------------'
-      ctx.outerRes.end buf
+
+      res.end body
 
   _request.on 'error', (err) ->
     console.error err
