@@ -32,7 +32,7 @@ ProxyMan.prototype.sendRequest = (req, res) ->
     method: req.method
     path: @targetUrl.path
     headers: req.headers
-  console.dir _opt
+
   _request = http.request _opt, (targetRes) ->
     buf = []
 
@@ -64,7 +64,7 @@ ProxyMan.prototype.sendRequest = (req, res) ->
         res.end()
 
   _request.on 'error', (err) ->
-    console.error err
+    ctx.emit 'error', err
 
   _request.end()
 
