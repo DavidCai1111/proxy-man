@@ -43,7 +43,6 @@ ProxyMan.prototype.sendRequest = () ->
     method: @outerReq.method
     path: @targetUrl.path
     headers: @outerReq.headers
-  console.dir _opt
   _request = http.request _opt, (targetRes) ->
     buf = []
 

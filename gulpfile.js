@@ -25,6 +25,7 @@ gulp.task('test', ['compile_coffee'], function (cb) {
             process.exit(0);
           })
       })
+
   }
 });
 
