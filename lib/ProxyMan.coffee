@@ -4,8 +4,9 @@ events = require 'events'
 url = require 'url'
 extension = require './extension'
 
+redirectRegex = /^30(1|2|7|8)$/;
+
 ProxyMan = () ->
-  @targetUrl = ''
   @proxyServer = http.createServer()
   events.EventEmitter.call this
 
@@ -14,30 +15,24 @@ util.inherits ProxyMan, events.EventEmitter
 ProxyMan.prototype.createProxy = (@targetUrl, @outerReq, @outerRes) ->
 
 ProxyMan.prototype.listen = (port, callback) ->
-  ctx = this
   @proxyServer.listen port, callback
 
   @targetUrl = url.parse @targetUrl, true
   @outerReq.setHeader = extension.req.setHeader
-  @outerReq.headers.host = ctx.targetUrl.host
+  @outerReq.headers.host = @targetUrl.host
 
-  ctx.emit 'beforeReqSend', @outerReq
-  ctx.sendRequest @outerReq, @outerRes
+  @emit 'beforeReqSend', @outerReq
+  @sendRequest @outerReq, @outerRes
 
 ProxyMan.prototype.sendRequest = (req, res) ->
-  console.log '---------res---------'
-  console.dir res.headers
-  console.log '---------res---------'
-  ctx = this
+  ctx = @
   _opt =
     hostname: @targetUrl.hostname
     port: @targetUrl.port
     method: req.method
     path: @targetUrl.path
     headers: req.headers
-
   console.dir _opt
-
   _request = http.request _opt, (targetRes) ->
     buf = []
 
@@ -45,20 +40,28 @@ ProxyMan.prototype.sendRequest = (req, res) ->
       buf.push data
     targetRes.on 'end', () ->
       body = Buffer.concat(buf, buf.length).toString()
-      ctx.emit 'beforeResGet', targetRes
-      for key, value of targetRes.headers
-        console.log "set #{key} as #{value}"
-        res.setHeader key, value
 
-      res.writeHead targetRes.statusCode
+      #handle redirect
+      if redirectRegex.test targetRes.statusCode
+        unless ctx.targetUrl.href == targetRes.headers.location
+          console.log ctx.targetUrl.href
+          console.log targetRes.headers.location
+          @targetUrl = targetRes.headers.location
+          return ctx.sendRequest ctx.outerReq, ctx.outRes
 
-      console.log '--------------------'
-      console.log "status code #{res.statusCode}"
-      console.log res.headers
-      console.log body
-      console.log '--------------------'
+      res.statusCode = targetRes.statusCode
+      res.body = body
+      ctx.emit 'beforeResGet', res
 
-      res.end body
+      unless res.headersSent
+        for key, value of targetRes.headers
+          unless res.getHeader(key) == undefined
+            res.setHeader key, value
+
+        res.setHeader 'content-length', res.body.length
+        res.writeHead res.statusCode
+        res.write res.body
+        res.end()
 
   _request.on 'error', (err) ->
     console.error err
