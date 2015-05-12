@@ -1,4 +1,6 @@
 # proxy-man
+[![Build Status](https://travis-ci.org/DavidCai1993/proxy-man.svg?branch=master)](https://travis-ci.org/DavidCai1993/proxy-man)
+[![Coverage Status](https://coveralls.io/repos/DavidCai1993/proxy-man/badge.svg)](https://coveralls.io/r/DavidCai1993/proxy-man)
 
 ## 简介
 proxy-man是一个基于原生http模块实现的代理，它可以用来代理`http请求`，并在代理请求将要发出时，和将要接受目标响应时提供事件钩子，用来做自定义的修改。
