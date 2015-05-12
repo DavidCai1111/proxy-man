@@ -12,6 +12,10 @@
     "istanbul": "^0.3.13",
     "mocha": "^2.2.4",
     "should": "^6.0.1",
-    "supertest": "^0.15.0"
+    "supertest": "^0.15.0",
+    "gulp": "^3.8.11",
+    "gulp-coffee": "^2.3.1",
+    "gulp-istanbul": "^0.8.1",
+    "gulp-mocha": "^2.0.1"
   }
 }
