@@ -43,7 +43,7 @@ ProxyMan.prototype.sendRequest = () ->
     path: @targetUrl.path
     headers: @outerReq.headers
 
-  _request = http.request _opt, ((targetRes) ->
+  _request = http.request _opt, ( (targetRes) ->
     buf = []
 
     targetRes.on 'data', (data) ->
