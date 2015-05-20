@@ -7,18 +7,18 @@ extension = require './extension'
 redirectRegex = /^30(1|2|7|8)$/;
 
 ProxyMan = () ->
-  @_proxyServer = null
+  @proxyServer = null
   events.EventEmitter.call @
 
 util.inherits ProxyMan, events.EventEmitter
 
 ProxyMan.prototype.createProxy = (@targetUrl, @outerReq, @outerRes) ->
   if @outerReq == undefined || @outerRes == undefined
-    if @_proxyServer == null then @_proxyServer = http.createServer()
-    @_proxyServer.on 'request', (req, res) =>
+    if @proxyServer == null then @proxyServer = http.createServer()
+    @proxyServer.on 'request', (req, res) =>
       @outerReq = req
       @outerRes = res
-      @pretreatment.call(@)
+      @pretreatment()
       @sendRequest()
     @
   else
@@ -26,7 +26,7 @@ ProxyMan.prototype.createProxy = (@targetUrl, @outerReq, @outerRes) ->
     @sendRequest()
 
 ProxyMan.prototype.listen = (port, callback) ->
-  @_proxyServer.listen port, callback
+  @proxyServer.listen port, callback
 
 ProxyMan.prototype.pretreatment = () ->
   @targetUrl = url.parse @targetUrl, true
@@ -35,14 +35,14 @@ ProxyMan.prototype.pretreatment = () ->
 
 ProxyMan.prototype.sendRequest = () ->
   @emit 'beforeReqSend', @outerReq
-  _opt =
+  opt =
     hostname: @targetUrl.hostname
     port: @targetUrl.port
     method: @outerReq.method
     path: @targetUrl.path
     headers: @outerReq.headers
 
-  _request = http.request _opt, (targetRes) =>
+  request = http.request opt, (targetRes) =>
     buf = []
 
     targetRes.on 'data', (data) ->
@@ -70,13 +70,13 @@ ProxyMan.prototype.sendRequest = () ->
         @outerRes.end()
         @close()
 
-  _request.on 'error', (err) =>
+  request.on 'error', (err) =>
     @emit 'error', err
 
-  _request.end()
+  request.end()
 
 ProxyMan.prototype.close = (callback) ->
-  unless @_proxyServer == null
-    @_proxyServer.close(callback)
+  unless @proxyServer == null
+    @proxyServer.close(callback)
 
 exports = module.exports = ProxyMan

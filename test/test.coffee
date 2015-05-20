@@ -34,7 +34,7 @@ describe 'test proxy-man', () ->
       res.end()
     server.listen 9092
 
-    request(proxy._proxyServer)
+    request(proxy.proxyServer)
     .get '/'
     .expect 'Content-Type', /text/
     .expect 200, () ->
