@@ -15,12 +15,11 @@ util.inherits ProxyMan, events.EventEmitter
 ProxyMan.prototype.createProxy = (@targetUrl, @outerReq, @outerRes) ->
   if @outerReq == undefined || @outerRes == undefined
     if @_proxyServer == null then @_proxyServer = http.createServer()
-    @_proxyServer.on 'request', ((req, res) ->
+    @_proxyServer.on 'request', (req, res) =>
       @outerReq = req
       @outerRes = res
       @pretreatment.call(@)
       @sendRequest()
-    ).bind @
     @
   else
     @pretreatment()
@@ -43,14 +42,14 @@ ProxyMan.prototype.sendRequest = () ->
     path: @targetUrl.path
     headers: @outerReq.headers
 
-  _request = http.request _opt, ( (targetRes) ->
+  _request = http.request _opt, (targetRes) =>
     buf = []
 
     targetRes.on 'data', (data) ->
       buf.push data
-    targetRes.on 'end', ( () ->
+    targetRes.on 'end', () =>
       body = Buffer.concat(buf, buf.length).toString()
-      #handle redirect
+      #redirect
       if redirectRegex.test targetRes.statusCode
         unless @targetUrl.href == targetRes.headers.location
           @targetUrl = targetRes.headers.location
@@ -71,12 +70,8 @@ ProxyMan.prototype.sendRequest = () ->
         @outerRes.end()
         @close()
 
-    ).bind @
-  ).bind @
-
-  _request.on 'error', ( (err) ->
+  _request.on 'error', (err) =>
     @emit 'error', err
-  ).bind @
 
   _request.end()
 
