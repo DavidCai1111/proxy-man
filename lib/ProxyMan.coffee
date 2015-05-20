@@ -77,6 +77,6 @@ ProxyMan.prototype.sendRequest = () ->
 
 ProxyMan.prototype.close = (callback) ->
   unless @proxyServer == null
-    @proxyServer.close(callback)
+    @proxyServer.close callback
 
 exports = module.exports = ProxyMan
