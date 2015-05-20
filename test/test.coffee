@@ -11,7 +11,6 @@ describe 'test proxy-man', () ->
     ProxyServer = http.createServer (req, res) ->
       proxy.createProxy('http://localhost:9091', req, res)
     ProxyServer.listen 8081
-
     server = http.createServer (req, res) ->
       res.writeHead 200, {'Content-Type': 'text/plain'}
       res.write '代理成功！' + '\n' + JSON.stringify(req.headers, true, 2)
@@ -27,7 +26,6 @@ describe 'test proxy-man', () ->
   it 'proxy server', (done) ->
     proxy = new ProxyMan()
     proxy.createProxy('http://localhost:9092').listen 8082
-
     server = http.createServer (req, res) ->
       res.writeHead 200, {'Content-Type': 'text/plain'}
       res.write '代理成功！' + '\n' + JSON.stringify(req.headers, true, 2)
