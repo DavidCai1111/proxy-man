@@ -13,7 +13,7 @@ ProxyMan = () ->
 util.inherits ProxyMan, events.EventEmitter
 
 ProxyMan.prototype.createProxy = (@targetUrl, @outerReq, @outerRes) ->
-  if @outerReq == undefined || @outerRes == undefined
+  if @outerReq == undefined or @outerRes == undefined
     if @proxyServer == null then @proxyServer = http.createServer()
     @proxyServer.on 'request', (req, res) =>
       @outerReq = req
