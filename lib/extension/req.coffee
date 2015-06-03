@@ -1,6 +1,4 @@
-req = {}
-
-req.setHeader = (key, value) ->
-  @headers[key] = value
+req =
+  setHeader: (key, value) -> @headers[key] = value
 
 module.exports = req

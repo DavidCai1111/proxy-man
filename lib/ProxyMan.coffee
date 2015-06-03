@@ -13,8 +13,8 @@ ProxyMan = () ->
 util.inherits ProxyMan, events.EventEmitter
 
 ProxyMan.prototype.createProxy = (@targetUrl, @outerReq, @outerRes) ->
-  if @outerReq == undefined or @outerRes == undefined
-    if @proxyServer == null then @proxyServer = http.createServer()
+  if @outerReq is undefined or @outerRes is undefined
+    if @proxyServer is null then @proxyServer = http.createServer()
     @proxyServer.on 'request', (req, res) =>
       @outerReq = req
       @outerRes = res
@@ -45,8 +45,8 @@ ProxyMan.prototype.sendRequest = () ->
   request = http.request opt, (targetRes) =>
     buf = []
 
-    targetRes.on 'data', (data) ->
-      buf.push data
+    targetRes.on 'data', (data) -> buf.push data
+
     targetRes.on 'end', () =>
       body = Buffer.concat(buf, buf.length).toString()
       #redirect
@@ -70,8 +70,7 @@ ProxyMan.prototype.sendRequest = () ->
         @outerRes.end()
         @close()
 
-  request.on 'error', (err) =>
-    @emit 'error', err
+  request.on 'error', (err) => @emit 'error', err
 
   request.end()
 
